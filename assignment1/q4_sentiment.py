@@ -10,8 +10,9 @@ from q4_softmaxreg import softmaxRegression, getSentenceFeature, accuracy, softm
 # NOTE: fill in one more "your code here" below before running!
 REGULARIZATION = None   # Assign a list of floats in the block below
 ### YOUR CODE HERE
-power = range(-13,5)
-REGULARIZATION = [2**p for p in power]
+#power = range(-13,5)
+#REGULARIZATION = [2**p for p in power]
+REGULARIZATION = [0.0, 0.00001, 0.00003, 0.0001, 0.0003, 0.001, 0.003, 0.01]
 ### END YOUR CODE
 
 # Load the dataset
