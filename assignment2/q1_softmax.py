@@ -20,7 +20,7 @@ def softmax(x):
     out: tf.Tensor with shape (n_sample, n_features). You need to construct this
          tensor in this problem.
   """
-  x = tf.transpose(x)
+  x = tf.transpose(x) # in order to use the broadcast rule in numpy/tensorflow
   x -= tf.reduce_max(x, reduction_indices = 0)
   x = tf.exp(x)
   out =  x / tf.reduce_sum(x, reduction_indices = 0)
@@ -50,7 +50,7 @@ def cross_entropy_loss(y, yhat):
           tensor in the problem.
   """
   ### YOUR CODE HERE
-  raise NotImplementedError
+  out = tf.reduce_sum(y * tf.log(yhat))
   ### END YOUR CODE
   return out
 
