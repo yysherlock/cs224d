@@ -20,12 +20,12 @@ def softmax(x):
     out: tf.Tensor with shape (n_sample, n_features). You need to construct this
          tensor in this problem.
   """
-
-  x -= tf.reduce_max(x, axis = 1)
+  x = tf.transpose(x)
+  x -= tf.reduce_max(x, reduction_indices = 0)
   x = tf.exp(x)
-  out =  x / tf.reduce_sum(x, axis = 1)
+  out =  x / tf.reduce_sum(x, reduction_indices = 0)
 
-  return out
+  return tf.transpose(out)
 
 def cross_entropy_loss(y, yhat):
   """
@@ -65,6 +65,7 @@ def test_softmax_basic():
       np.array([[1001,1002],[3,4]]), dtype=tf.float32))
   with tf.Session():
       test1 = test1.eval()
+      print test1
   assert np.amax(np.fabs(test1 - np.array(
       [0.26894142,  0.73105858]))) <= 1e-6
 
