@@ -106,7 +106,7 @@ class SoftmaxModel(Model):
     """
     ### YOUR CODE HERE
     opt = tf.train.AdamOptimizer(learning_rate = Config.lr)
-    opt_op = opt.minimize(loss)
+    train_op = opt.minimize(loss)
     ### END YOUR CODE
     return train_op
 
