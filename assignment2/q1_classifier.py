@@ -131,8 +131,8 @@ class SoftmaxModel(Model):
     """
     ### YOUR CODE HERE
     with tf.name_scope('linear-layer'):
-        W = tf.Variables(tf.zeros((Config.n_features, Config.n_classes)), name = "weights")
-        b = tf.Variables(tf.zeros((Config.batch_size, Config.n_classes)), name = "bias")
+        W = tf.Variable(tf.zeros((Config.n_features, Config.n_classes)), name = "weights")
+        b = tf.Variable(tf.zeros((Config.batch_size, Config.n_classes)), name = "bias")
         z = tf.matmul(input_data, W) + b
     out = softmax(z)
     ### END YOUR CODE
