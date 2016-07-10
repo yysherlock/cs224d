@@ -105,7 +105,8 @@ class SoftmaxModel(Model):
       train_op: The Op for training.
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    opt = tf.train.AdamOptimizer(learning_rate = Config.lr)
+    opt_op = opt.minimize(loss)
     ### END YOUR CODE
     return train_op
 
@@ -129,7 +130,11 @@ class SoftmaxModel(Model):
       out: A tensor of shape (batch_size, n_classes)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    with tf.name_scope('linear-layer'):
+        W = tf.Variables(tf.zeros((Config.n_features, Config.n_classes)), name = "weights")
+        b = tf.Variables(tf.zeros((Config.batch_size, Config.n_classes)), name = "bias")
+        z = tf.matmul(input_data, W) + b
+    out = softmax(z)
     ### END YOUR CODE
     return out
 
@@ -144,7 +149,7 @@ class SoftmaxModel(Model):
       loss: A 0-d tensor (scalar)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    loss = cross_entropy_loss(self.labels_placeholder, pred)
     ### END YOUR CODE
     return loss
 
