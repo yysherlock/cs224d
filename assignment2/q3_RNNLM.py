@@ -71,7 +71,7 @@ class RNNLM_Model(LanguageModel):
                          type tf.float32
 
     Add these placeholders to self as the instance variables
-  
+
       self.input_placeholder
       self.labels_placeholder
       self.dropout_placeholder
@@ -79,9 +79,11 @@ class RNNLM_Model(LanguageModel):
     (Don't change the variable names)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    self.input_placeholder = tf.placeholder(tf.int32, shape=[None, self.config.num_steps], name='Input')
+    self.labels_placeholder = tf.placeholder(tf.float32, shape=[None, self.config.num_steps], name='Target')
+    self.dropout_placeholder = tf.placeholder(tf.float32, name='Dropout')
     ### END YOUR CODE
-  
+
   def add_embedding(self):
     """Add embedding layer.
 
@@ -101,7 +103,9 @@ class RNNLM_Model(LanguageModel):
     # The embedding lookup is currently only implemented for the CPU
     with tf.device('/cpu:0'):
       ### YOUR CODE HERE
-      raise NotImplementedError
+      embedding = tf.get_variable('Embedding', [len(self.vocab), self.config.embed_size], trainable=True)
+      inputs = tf.nn.embedding_lookup(embedding, self.input_placeholder) # dim: (batch_size, num_steps, embed_size)
+      inputs = [tf.squeeze(x, [1]) for x in tf.split(1, self.config.num_steps, inputs)] # [(batch_size, embed_size), ...], len(inputs)=num_steps
       ### END YOUR CODE
       return inputs
 
@@ -112,8 +116,8 @@ class RNNLM_Model(LanguageModel):
     over the vocabulary.
 
     Hint: Here are the dimensions of the variables you will need to
-          create 
-          
+          create
+
           U:   (hidden_size, len(vocab))
           b_2: (len(vocab),)
 
@@ -125,14 +129,17 @@ class RNNLM_Model(LanguageModel):
                (batch_size, len(vocab)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    with tf.variable_scope('Projection'):
+        U = tf.get_variable('U', [self.config.hidden_size, len(self.vocab)])
+        b2 = tf.get_variable('b2', [len(self.vocab)])
+        outputs = [ tf.matmul(rnn_output, U) + b2 for rnn_output in rnn_outpus]
     ### END YOUR CODE
     return outputs
 
   def add_loss_op(self, output):
     """Adds loss ops to the computational graph.
 
-    Hint: Use tensorflow.python.ops.seq2seq.sequence_loss to implement sequence loss. 
+    Hint: Use tensorflow.python.ops.seq2seq.sequence_loss to implement sequence loss.
 
     Args:
       output: A tensor of shape (None, self.vocab)
@@ -140,7 +147,10 @@ class RNNLM_Model(LanguageModel):
       loss: A 0-d tensor (scalar)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    all_ones = [tf.ones([self.config.batch_size * self.config.num_steps])] # weights
+    cross_entropy = sequence_loss([output], [tf.reshape(self.labels_placeholder, [-1])], all_ones )
+    tf.add_to_collection('total_loss', cross_entropy)
+    loss = tf.add_n(tf.get_collection('total_loss'))
     ### END YOUR CODE
     return loss
 
@@ -149,7 +159,7 @@ class RNNLM_Model(LanguageModel):
 
     Creates an optimizer and applies the gradients to all trainable variables.
     The Op returned by this function is what must be passed to the
-    `sess.run()` call to cause the model to train. See 
+    `sess.run()` call to cause the model to train. See
 
     https://www.tensorflow.org/versions/r0.7/api_docs/python/train.html#Optimizer
 
@@ -164,10 +174,12 @@ class RNNLM_Model(LanguageModel):
       train_op: The Op for training.
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    opt = tf.train.AdamOptimizer(self.config.lr)
+    #train_op = opt.minimize(self.calculate_loss)
+    train_op = opt.minimize(loss)
     ### END YOUR CODE
     return train_op
-  
+
   def __init__(self, config):
     self.config = config
     self.load_data(debug=False)
@@ -175,7 +187,7 @@ class RNNLM_Model(LanguageModel):
     self.inputs = self.add_embedding()
     self.rnn_outputs = self.add_model(self.inputs)
     self.outputs = self.add_projection(self.rnn_outputs)
-  
+
     # We want to check how well we correctly predict the next word
     # We cast o to float64 as there are numerical issues at hand
     # (i.e. sum(output of softmax) = 1.00000298179 and not 1)
@@ -198,7 +210,7 @@ class RNNLM_Model(LanguageModel):
           initial state for the RNN. Add this to self as instance variable
 
           self.initial_state
-  
+
           (Don't change variable name)
     Hint: Add the last RNN output to self as instance variable
 
@@ -213,8 +225,8 @@ class RNNLM_Model(LanguageModel):
           this for iteration 0 though or nothing will be initialized!)
     Hint: Here are the dimensions of the various variables you will need to
           create:
-      
-          H: (hidden_size, hidden_size) 
+
+          H: (hidden_size, hidden_size)
           I: (embed_size, hidden_size)
           b_1: (hidden_size,)
 
@@ -226,7 +238,23 @@ class RNNLM_Model(LanguageModel):
                a tensor of shape (batch_size, hidden_size)
     """
     ### YOUR CODE HERE
-    raise NotImplementedError
+    with tf.variable_scope('InputDropout'):
+        inputs = [tf.nn.dropout(inp, self.dropout_placeholder) for inp in inputs]
+    with tf.variable_scope('RNN') as scope:
+        self.initial_state = tf.zeros([self.config.batch_size, self.config.hidden_size])
+        state = self.initial_state
+        rnn_outputs = []
+        for tstep,current_input in enumerate(inputs):
+            if tstep > 0:
+                scope.reuse_variables()
+            RNN_H = tf.get_variable('HMatrix', [self.config.hidden_size, self.config.hidden_size])
+            RNN_I = tf.get_variable('IMatrix', [self.config.embed_size, self.config.hidden_size])
+            RNN_b = tf.get_variable('B', [self.config.hidden_size])
+            state = tf.nn.sigmoid(tf.matmul(state, RNN_H) + tf.matmul(current_input, RNN_I) + RNN_b)
+            rnn_outputs.append(state)
+        self.final_state = rnn_outputs[-1]
+    with tf.variable_scope('RNNDropout'):
+        rnn_outputs = [tf.nn.dropout(x, self.dropout_placeholder) for x in rnn_outputs]
     ### END YOUR CODE
     return rnn_outputs
 
@@ -315,7 +343,7 @@ def test_RNNLM():
   with tf.Session() as session:
     best_val_pp = float('inf')
     best_val_epoch = 0
-  
+
     session.run(init)
     for epoch in xrange(config.max_epochs):
       print 'Epoch {}'.format(epoch)
@@ -334,7 +362,7 @@ def test_RNNLM():
       if epoch - best_val_epoch > config.early_stopping:
         break
       print 'Total time: {}'.format(time.time() - start)
-      
+
     saver.restore(session, 'ptb_rnnlm.weights')
     test_pp = model.run_epoch(session, model.encoded_test)
     print '=-=' * 5
