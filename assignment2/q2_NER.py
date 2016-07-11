@@ -92,7 +92,7 @@ class NERModel(LanguageModel):
     (Don't change the variable names)
     """
     ### YOUR CODE HERE
-    self.input_placeholder = tf.placeholder(tf.int32, shape=[None, self.config.window_size]， name='Input')
+    self.input_placeholder = tf.placeholder(tf.int32, shape=[None, self.config.window_size], name='Input')
     self.labels_placeholder = tf.placeholder(tf.float32, shape=[None, self.config.label_size], name='Target')
     self.dropout_placeholder = tf.placeholder(tf.float32, name='Output')
     ### END YOUR CODE
