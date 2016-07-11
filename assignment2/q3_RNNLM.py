@@ -132,7 +132,7 @@ class RNNLM_Model(LanguageModel):
     with tf.variable_scope('Projection'):
         U = tf.get_variable('U', [self.config.hidden_size, len(self.vocab)])
         b2 = tf.get_variable('b2', [len(self.vocab)])
-        outputs = [ tf.matmul(rnn_output, U) + b2 for rnn_output in rnn_outpus]
+        outputs = [ tf.matmul(rnn_output, U) + b2 for rnn_output in rnn_outputs]
     ### END YOUR CODE
     return outputs
 
