@@ -204,7 +204,7 @@ class NERModel(LanguageModel):
     ### END YOUR CODE
     return output
 
-  def add_loss_op(self, pred):
+  def add_loss_op(self, y):
     """Adds cross_entropy_loss ops to the computational graph.
 
     Hint: You can use tf.nn.softmax_cross_entropy_with_logits to simplify your
